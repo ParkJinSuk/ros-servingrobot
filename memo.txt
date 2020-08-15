@@ -1,0 +1,25 @@
+# 맵 작성 ######################################################
+roslaunch turtlebot3_gazebo turtlebot3_world.launch
+roslaunch turtlebot3_gazebo turtlebot3_gazebo_rviz.launch
+roslaunch turtlebot3_slam turtlebot3_gmapping.launch
+
+roslaunch turtlebot3_teleop_key.launch
+
+# 주행 후 맵 저장
+rosrun map_server map_saver
+################################################################
+
+# 네비게이션 ####################################################
+# 설치
+sudo apt-get install ros-melodic-dwa-local-planner
+
+# 실행
+roslaunch turtlebot3_gazebo turtlebot3_world.launch
+roslaunch turtlebot3_navigation turtlebot3_navigation.launch map_file:=$HOME/map.yaml
+
+
+################################################################
+
+
+# 참고 사이트
+https://emanual.robotis.com/docs/en/platform/turtlebot3/simulation/#turtlebot3-simulation-using-fake-node
