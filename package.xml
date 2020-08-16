@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>ROS-ServingRobot</name>
+  <name>ros-servingrobot</name>
   <version>0.0.0</version>
-  <description>The ROS-ServingRobot package</description>
+  <description>The ros-servingrobot package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
   <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
-  <maintainer email="jinsuk@todo.todo">jinsuk</maintainer>
+  <maintainer email="qkrwlstjr9@naver.com">jinsuk</maintainer>
 
 
   <!-- One license tag required, multiple allowed, one license per tag -->
