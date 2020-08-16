@@ -16,10 +16,13 @@ sudo apt-get install ros-melodic-dwa-local-planner
 # 실행
 roslaunch turtlebot3_gazebo turtlebot3_world.launch
 roslaunch turtlebot3_navigation turtlebot3_navigation.launch map_file:=$HOME/map.yaml
-
-
 ################################################################
 
 
 # 참고 사이트
-https://emanual.robotis.com/docs/en/platform/turtlebot3/simulation/#turtlebot3-simulation-using-fake-node
+https://emanual.robotis.com/docs/en/platform/turtlebot3/simulation/turtlebot3-simulation-using-fake-node
+
+# 이종 디바이스간 통신
+export ROS_HOSTNAME='자기 주소'
+export ROS_MASTER_URI='http://마스터 주소:13311'
+
