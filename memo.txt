@@ -26,3 +26,6 @@ https://emanual.robotis.com/docs/en/platform/turtlebot3/simulation/turtlebot3-si
 export ROS_HOSTNAME='자기 주소'
 export ROS_MASTER_URI='http://마스터 주소:13311'
 
+
+# 로봇 모델 확인
+roslaunch urdf_tutorial display.launch model:=servingrobot.urdf
