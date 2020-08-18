@@ -29,3 +29,7 @@ export ROS_MASTER_URI='http://마스터 주소:13311'
 
 # 로봇 모델 확인
 roslaunch urdf_tutorial display.launch model:=servingrobot.urdf
+
+# 아두이노 노드 실행명령
+rosrun rosserial_python serial_node.py _port:=/dev/ttyACM0
+
