@@ -33,3 +33,6 @@ roslaunch urdf_tutorial display.launch model:=servingrobot.urdf
 # 아두이노 노드 실행명령
 rosrun rosserial_python serial_node.py _port:=/dev/ttyACM0
 
+# 아두이노 mpu6050 라이브러리 설치
+https://blog.naver.com/chandong83/220903640824
+
