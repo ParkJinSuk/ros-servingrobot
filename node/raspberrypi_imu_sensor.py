@@ -9,12 +9,12 @@ from sensor_msgs.msg import Imu
 
 sensor = mpu6050(0x68)
 
-float gyro_x    = 0
-float gyro_y    = 0
-float gyro_z    = 0
-float accel_x   = 0
-float accel_y   = 0
-float accel_z   = 0
+gyro_x    = 0
+gyro_y    = 0
+gyro_z    = 0
+accel_x   = 0
+accel_y   = 0
+accel_z   = 0
 
 def update_mpu6050():
     gyro_data = sensor.get_gyro_data().split('')
