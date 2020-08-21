@@ -17,10 +17,11 @@ accel_y   = 0
 accel_z   = 0
 
 def update_mpu6050():
-    gyro_data = sensor.get_gyro_data().split(',')
-    print(gyro_data[0])
-    print(gyro_data[1])
-    print(gyro_data[2])
+    gyro_data = sensor.get_gyro_data()
+    gyro = gyro_data.split(',')
+    print(gyro[0])
+    print(gyro[1])
+    print(gyro[2])
     # rospy.loginfo("gyro data\t" + sensor.get_gyro_data())
     # rospy.loginfo("accel data\t" + sensor.get_accel_data())
 
