@@ -33,5 +33,6 @@ roslaunch urdf_tutorial display.launch model:=servingrobot.urdf
 # 아두이노 노드 실행명령
 rosrun rosserial_python serial_node.py _port:=/dev/ttyACM0
 
-# 아두이노 라이브러리 매니저 있는 버전
-(2:1.0.5+dfsg2-4.1)
+# 라즈베리파이 i2c 권한설정
+sudo chgrp i2c /dev/i2c-1
+sudo chmod 666 /dev/i2c-1
