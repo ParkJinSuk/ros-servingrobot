@@ -17,7 +17,7 @@ accel_y   = 0
 accel_z   = 0
 
 def update_mpu6050():
-    gyro_data = sensor.get_gyro_data().split('')
+    gyro_data = sensor.get_gyro_data().split(',')
     print(gyro_data[0])
     print(gyro_data[1])
     print(gyro_data[2])
