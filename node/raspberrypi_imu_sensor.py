@@ -12,6 +12,7 @@ from sensor_msgs.msg import Imu
 
 ## mpu6050 class
 # https://github.com/m-rtijn/mpu6050/blob/master/mpu6050/mpu6050.py
+
 class mpu6050:
 
     # Global Variables
@@ -61,7 +62,6 @@ class mpu6050:
     # MPU-6050 Data
     gyro_x    = 0
     gyro_y    = 0
-    gyro_z    = 0
     gyro_z    = 0
     accel_x   = 0
     accel_y   = 0
@@ -169,11 +169,20 @@ class mpu6050:
         z = z / accel_scale_modifier
 
         if g is True:
+            self.accel_x   = x
+            self.accel_y   = y
+            self.accel_z   = z
+        
             return {'x': x, 'y': y, 'z': z}
         elif g is False:
             x = x * self.GRAVITIY_MS2
             y = y * self.GRAVITIY_MS2
             z = z * self.GRAVITIY_MS2
+            
+            self.accel_x   = x
+            self.accel_y   = y
+            self.accel_z   = z
+            
             return {'x': x, 'y': y, 'z': z}
 
     def set_gyro_range(self, gyro_range):
@@ -237,6 +246,10 @@ class mpu6050:
         y = y / gyro_scale_modifier
         z = z / gyro_scale_modifier
 
+        self.gyro_x    = x
+        self.gyro_y    = y
+        self.gyro_z    = z
+
         return {'x': x, 'y': y, 'z': z}
 
     def get_all_data(self):
@@ -250,36 +263,47 @@ class mpu6050:
 
 
 def update_mpu6050():
-    x = sensor.read_i2c_word(sensor.ACCEL_XOUT0)
-    y = sensor.read_i2c_word(sensor.ACCEL_YOUT0)
-    z = sensor.read_i2c_word(sensor.ACCEL_ZOUT0)
-
-    gyro_data = sensor.get_gyro_data()
-    gyro = gyro_data.split(',')
-    print(gyro[0])
-    print(gyro[1])
-    print(gyro[2])
-    # rospy.loginfo("gyro data\t" + sensor.get_gyro_data())
-    # rospy.loginfo("accel data\t" + sensor.get_accel_data())
+    # update gyro&accel data
+    sensor.get_all_data()
+    
+    # loginfo data
+    rospy.loginfo("gyro data\t{}\t{}\t{}".format(sensor.gyro_x, sensor.gyro_y, sensor.gyro_z))
+    rospy.loginfo("accel data\t{}\t{}\t{}".format(sensor.accel_x, sensor.accel_y, sensor.accel_z))
 
 
-# def node_imu_topic():
-#     rospy.init_node('imu_broadcaster')
-
-#     while not rospy.is_shutdown():
-#         pub.publish()
-
-#         rospy.sleep(1.0)
+def node_imu_topic():
+    rospy.init_node('imu_broadcaster')
+    pub = rospy.Publisher('/imu', Imu)
+    
+    imu = Imu()
+    imu.header.frame_id = 'imu_link'
+    seq = 0
+    
+    while not rospy.is_shutdown():
+        update_mpu6050()
+        
+        imu.header.seq += 1
+        imu.header.stamp = rospy.Time.now()
+        
+        imu.angular_velocity.x = sensor.gyro_x
+        imu.angular_velocity.y = sensor.gyro_y
+        imu.angular_velocity.z = sensor.gyro_z
+        imu.linear_acceleration.x = sensor.accel_x
+        imu.linear_acceleration.y = sensor.accel_y
+        imu.linear_acceleration.z = sensor.accel_z
+        
+        pub.publish(imu)
+        rospy.sleep(0.1)
 
 if __name__ == "__main__":
     sensor = mpu6050(0x68)
 
     try:
-        # node_imu_topic()
+        node_imu_topic()
 
-        while(1):
-            update_mpu6050()
-            time.sleep(0.5)
+        # while(1):
+        #    update_mpu6050()
+        #    time.sleep(0.5)
 
     except rospy.ROSInterruptException:
         pass
