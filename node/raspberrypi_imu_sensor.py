@@ -3,6 +3,7 @@ import roslib
 import rospy
 import time
 import tf
+import numpy as np
 
 # from mpu6050 import mpu6050
 import smbus
@@ -60,6 +61,10 @@ class mpu6050:
     GYRO_CONFIG = 0x1B
 
     # MPU-6050 Data
+    orient_x  = 0
+    orient_y  = 0
+    orient_z  = 0
+    orient_w  = 0
     gyro_x    = 0
     gyro_y    = 0
     gyro_z    = 0
@@ -252,11 +257,18 @@ class mpu6050:
 
         return {'x': x, 'y': y, 'z': z}
 
+    def euler_to_quaternion(self, yaw, pithch, roll):
+        self.orient_x = np.sin(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) - np.cos(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
+        self.orient_y = np.cos(roll/2) * np.sin(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.cos(pitch/2) * np.sin(yaw/2)
+        self.orient_z = np.cos(roll/2) * np.cos(pitch/2) * np.sin(yaw/2) - np.sin(roll/2) * np.sin(pitch/2) * np.cos(yaw/2)
+        self.orient_w = np.cos(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
+    
     def get_all_data(self):
         """Reads and returns all the available data."""
         temp = self.get_temp()
         accel = self.get_accel_data()
         gyro = self.get_gyro_data()
+        euler_to_quaternion(self.gyro_x, self.gyro_y, self.gyro_z)
 
         return [accel, gyro, temp]
 ######################################################
@@ -285,9 +297,15 @@ def node_imu_topic():
         imu.header.seq += 1
         imu.header.stamp = rospy.Time.now()
         
+        imu.orientation.x = sensor.orient_x
+        imu.orientation.y = sensor.orient_y
+        imu.orientation.z = sensor.orient_z
+        imu.orientation.w = sensor.orient_w
+        
         imu.angular_velocity.x = sensor.gyro_x
         imu.angular_velocity.y = sensor.gyro_y
         imu.angular_velocity.z = sensor.gyro_z
+
         imu.linear_acceleration.x = sensor.accel_x
         imu.linear_acceleration.y = sensor.accel_y
         imu.linear_acceleration.z = sensor.accel_z
