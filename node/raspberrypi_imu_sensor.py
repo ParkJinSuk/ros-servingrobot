@@ -257,7 +257,7 @@ class mpu6050:
 
         return {'x': x, 'y': y, 'z': z}
 
-    def euler_to_quaternion(self, yaw, pithch, roll):
+    def euler_to_quaternion(self, yaw, pitch, roll):
         self.orient_x = np.sin(roll/2) * np.cos(pitch/2) * np.cos(yaw/2) - np.cos(roll/2) * np.sin(pitch/2) * np.sin(yaw/2)
         self.orient_y = np.cos(roll/2) * np.sin(pitch/2) * np.cos(yaw/2) + np.sin(roll/2) * np.cos(pitch/2) * np.sin(yaw/2)
         self.orient_z = np.cos(roll/2) * np.cos(pitch/2) * np.sin(yaw/2) - np.sin(roll/2) * np.sin(pitch/2) * np.cos(yaw/2)
