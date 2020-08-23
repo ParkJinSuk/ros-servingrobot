@@ -268,7 +268,7 @@ class mpu6050:
         temp = self.get_temp()
         accel = self.get_accel_data()
         gyro = self.get_gyro_data()
-        euler_to_quaternion(self.gyro_x, self.gyro_y, self.gyro_z)
+        self.euler_to_quaternion(self.gyro_x, self.gyro_y, self.gyro_z)
 
         return [accel, gyro, temp]
 ######################################################
