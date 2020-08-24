@@ -95,7 +95,7 @@
   </joint>
 
   <!--imu link-->
-  <!--
+  
   <link name="imu_link">
     <visual>
       <geometry>
@@ -110,5 +110,5 @@
     <child link="imu_link"/>
     <origin rpy="0 0 0" xyz="0 0 -0.5"/>
   </joint>
-  -->
+  
 </robot>
