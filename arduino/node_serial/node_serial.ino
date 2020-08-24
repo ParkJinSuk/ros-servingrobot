@@ -71,8 +71,11 @@ char BLDC_direction = HIGH; //BLDC 방향 제어, LOW 시계 방향, HIGH 반시
 
 // ros 설정
 void onTwist(const geometry_msgs::Twist &msg);
+double ROBOT_WIDTH = 0.6;  // 서빙로봇의 폭(m)
+double ROBOT_WHEEL_DIAMETER = 0.095; // 서빙로봇 바퀴 직경(m)
 ros::NodeHandle nh;
 ros::Subscriber<geometry_msgs::Twist> sub("/cmd_vel", &onTwist);
+
 
 void setup()
 {
@@ -333,17 +336,13 @@ void encoder_interrupt()
 
 void onTwist(const geometry_msgs::Twist &msg)
 {
+  double left_linear_speed = 0;
+  double right_linear_speed = 0;
 
-  // Cap values at [-1 .. 1]
-  float x = max(min(msg.linear.x, 1.0f), -1.0f);
-  float z = max(min(msg.angular.z, 1.0f), -1.0f);
-
-  // Calculate the intensity of left and right wheels. Simple version.
-  // Taken from https://hackernoon.com/unicycle-to-differential-drive-courseras-control-of-mobile-robots-with-ros-and-rosbots-part-2-6d27d15f2010#1e59
-  float l = (msg.linear.x - msg.angular.z) / 2;
-  float r = (msg.linear.x + msg.angular.z) / 2;
+  left_linear_speed = msg.linear.x - msg.angular.z * ROBOT_WIDTH/2;
+  right_linear_speed = msg.linear.x + msg.angular.z * ROBOT_WIDTH/2;
 
   // 최종 바퀴 각속도 설정
-  input_v_L = 0;
-  input_v_R = 0;
+  input_v_L = left_linear_speed / (ROBOT_WHEEL_DIAMETER * 3.1415);
+  input_v_R = right_linear_speed / (ROBOT_WHEEL_DIAMETER * 3.1415);
 }
