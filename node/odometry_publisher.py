@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+# https://gist.github.com/atotto/f2754f75bedb6ea56e3e0264ec405dcf
+# modified ros_odometry_publisher_example.py
+
 import math
 from math import sin, cos, pi
 
@@ -56,6 +59,10 @@ def callback(data):
     th += delta_th
 
     # since all odometry is 6DOF we'll need a quaternion created from yaw
+    _, __, th = euler_from_quaternion(imu_data.orientation.x,
+                                        imu_data.orientation.y,
+                                        imu_data.orientation.z,
+                                        imu_data.orientation.w)
     odom_quat = tf.transformations.quaternion_from_euler(0, 0, th)
     # odom_quat = (imu_data.orientation.x,
     #             imu_data.orientation.y, 
@@ -88,7 +95,21 @@ def callback(data):
 
     last_time = current_time
 
+def euler_from_quaternion(x, y, z, w):
+    t0 = +2.0 * (w * x + y * z)
+    t1 = +1.0 - 2.0 * (x * x + y * y)
+    X = math.degrees(math.atan2(t0, t1))
 
+    t2 = +2.0 * (w * y - z * x)
+    t2 = +1.0 if t2 > +1.0 else t2
+    t2 = -1.0 if t2 < -1.0 else t2
+    Y = math.degrees(math.asin(t2))
+
+    t3 = +2.0 * (w * z + x * y)
+    t4 = +1.0 - 2.0 * (y * y + z * z)
+    Z = math.degrees(math.atan2(t3, t4))
+
+    return X, Y, Z
 
 
 if __name__ == "__main__":
