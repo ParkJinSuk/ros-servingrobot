@@ -74,7 +74,7 @@ void onTwist(const geometry_msgs::Twist &msg);
 double ROBOT_WIDTH = 0.6;  // 서빙로봇의 폭(m)
 double ROBOT_WHEEL_DIAMETER = 0.095; // 서빙로봇 바퀴 직경(m)
 ros::NodeHandle nh;
-ros::Subscriber<geometry_msgs::Twist> sub("/cmd_vel", &onTwist);
+ros::Subscriber<geometry_msgs::Twist> sub("cmd_vel", &onTwist);
 
 
 void setup()
@@ -140,10 +140,15 @@ void setup()
   digitalWrite(C, LOW);
   digitalWrite(D, HIGH);
   digitalWrite(E, BLDC_direction); //BLDC 방향 제어
+  
+  nh.initNode()
+  nh.subscribe(sub)
 }
 
 void loop()
 {
+  nh.spinOne();
+  delay(1);
 }
 
 ISR (TIMER3_COMPA_vect)  // Compare 인터럽트
