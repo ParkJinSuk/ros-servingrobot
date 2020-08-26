@@ -18,7 +18,7 @@ def callback_tf(data):
 
 if __name__ == "__main__":
     rospy.init_node("test_node_twoTopic_sub")
-    # sub_tf = rospy.Subscriber('tf', TFMessage, callback_tf, queue_size=50)
+    sub_tf = rospy.Subscriber('tf', TFMessage, callback_tf, queue_size=50)
     sub_imu = rospy.Subscriber('imu', Imu, callback_imu, queue_size=50)
     rospy.spin()
     pass
