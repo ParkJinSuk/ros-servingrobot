@@ -279,8 +279,7 @@ def update_mpu6050():
     sensor.get_all_data()
     
     # loginfo data
-    rospy.loginfo("gyro data\t{}\t{}\t{}".format(sensor.gyro_x, sensor.gyro_y, sensor.gyro_z))
-    rospy.loginfo("accel data\t{}\t{}\t{}".format(sensor.accel_x, sensor.accel_y, sensor.accel_z))
+    rospy.loginfo("gyro\t{}\t{}\t{}\tlinear\t{}\t{}\t{}".format(round(sensor.gyro_x,2),round(sensor.gyro_y,2),round(sensor.gyro_z,2),round(sensor.accel_x,2),round(sensor.accel_y,2),round(sensor.accel_z,2)))
 
 
 def node_imu_topic():
