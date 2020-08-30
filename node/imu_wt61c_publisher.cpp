@@ -12,10 +12,12 @@
 
 #include "ros/ros.h"
 #include "sensor_msgs/Imu.h"
+#include "geometry_msgs/Twist.h"
 
 #include<sstream>
 
 sensor_msgs::Imu imu;
+geometry_msgs::Twist twist;
 
 float linear_accel_x;
 float linear_accel_y;
@@ -229,6 +231,10 @@ void imu_update(void)
     imu.orientation.y = quat.y;
     imu.orientation.z = quat.z;
     imu.orientation.w = quat.w;
+
+    twist.angular.x = angle_x;
+    twist.angular.y = angle_y;
+    twist.angular.z = angle_z;
 }
 
 Quaternion ToQuaternion(double yaw, double pitch, double roll) // yaw (Z), pitch (Y), roll (X)
@@ -258,6 +264,7 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "imu_wt61c_publisher");
     ros::NodeHandle nh;
     ros::Publisher imu_pub = nh.advertise<sensor_msgs::Imu>("imu", 1000);
+    ros::Publisher imu_angle_pub = nh.advertise<geometry_msgs::Twist>("imu_angle", 1000);
     ros::Rate loop_rate(100);    
     imu.header.frame_id = "imu_link";
 
@@ -289,6 +296,7 @@ int main(int argc, char **argv)
         imu_update();
 
         imu_pub.publish(imu);
+        imu_angle_pub.publish(twist);
         loop_rate.sleep();
     }
 
