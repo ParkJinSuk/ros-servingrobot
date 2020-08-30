@@ -21,8 +21,8 @@ double angular_velocity_BLDC = 0;
 double input_v_BLDC = 0;
 double error_BLDC;
 double Ke_BLDC = 0.0688;
-double Kp_BLDC = 0.20824/1.5;
-double Ki_BLDC = 1.7062/1.5;
+double Kp_BLDC = 0.20824;
+double Ki_BLDC = 1.7062;
 
 double PControl_BLDC;
 double IControl_BLDC=0;
@@ -156,6 +156,7 @@ void setup()
 void loop()
 {
   nh.spinOnce();
+  BLDC_step(1);
   //delay(1);
 }
 
@@ -353,4 +354,41 @@ void onTwist(const geometry_msgs::Twist &msg)
   input_v_L = abs(left_linear_speed / (ROBOT_WHEEL_DIAMETER * 3.1415 / 360));
   input_v_R = abs(right_linear_speed / (ROBOT_WHEEL_DIAMETER * 3.1415 / 360));
 
+}
+
+void BLDC_step(int cmd)
+{
+ 
+  // 4bar left down
+  if(cmd == 0)
+  {
+    if(angle_BLDC > -49)
+    {
+      BLDC_direction == HIGH;
+      digitalWrite(E, BLDC_direction);
+      input_v_BLDC = 10;
+    }
+    else
+    {
+      input_v_BLDC = 0;
+    }
+    
+  }
+
+  // 4bar left up
+  else if(cmd == 1)
+  {
+    if(angle_BLDC < 49)
+    {
+      BLDC_direction = LOW;
+      digitalWrite(E, BLDC_direction);
+      input_v_BLDC = 10;
+    }
+    else
+    {
+      input_v_BLDC = 0;
+    }
+    
+  }
+     
 }

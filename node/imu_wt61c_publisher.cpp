@@ -15,16 +15,24 @@
 
 #include<sstream>
 
+sensor_msgs::Imu imu;
+
 float linear_accel_x;
 float linear_accel_y;
 float linear_accel_z;
 float gyro_velocity_x;
 float gyro_velocity_y;
 float gyro_velocity_z;
+float angle_x;
+float angle_y;
+float angle_z;
 float quat_x;
 float quat_y;
 float quat_z;
 float quat_w;
+
+struct Quaternion{double w, x, y, z;};
+Quaternion ToQuaternion(double yaw, double pitch, double roll);
 
 static int ret;
 static int fd;
@@ -173,7 +181,7 @@ void ParseData(char chr)
 				case 0x51:
 					for (i=0;i<3;i++) a[i] = (float)sData[i]/32768.0*16.0;
 					time(&now);
-					//printf("\r\nT:%s a:%6.3f %6.3f %6.3f ",asctime(localtime(&now)),a[0],a[1],a[2]);
+					// printf("\r\nT:%s a:%6.3f %6.3f %6.3f ",asctime(localtime(&now)),a[0],a[1],a[2]);
                     linear_accel_x = a[0];
                     linear_accel_y = a[1];
                     linear_accel_z = a[2];
@@ -181,19 +189,65 @@ void ParseData(char chr)
 					break;
 				case 0x52:
 					for (i=0;i<3;i++) w[i] = (float)sData[i]/32768.0*2000.0;
-					printf("w:%7.3f %7.3f %7.3f ",w[0],w[1],w[2]);					
+					// printf("w:%7.3f %7.3f %7.3f ",w[0],w[1],w[2]);
+                    gyro_velocity_x = w[0];
+                    gyro_velocity_y = w[1];
+                    gyro_velocity_z = w[2];				
 					break;
 				case 0x53:
 					for (i=0;i<3;i++) Angle[i] = (float)sData[i]/32768.0*180.0;
-					printf("A:%7.3f %7.3f %7.3f ",Angle[0],Angle[1],Angle[2]);
+					// printf("A:%7.3f %7.3f %7.3f ",Angle[0],Angle[1],Angle[2]);
+                    angle_x = Angle[0];
+                    angle_y = Angle[1];
+                    angle_z = Angle[2];
 					break;
 				case 0x54:
 					for (i=0;i<3;i++) h[i] = (float)sData[i];
-					printf("h:%4.0f %4.0f %4.0f ",h[0],h[1],h[2]);
+					// printf("h:%4.0f %4.0f %4.0f ",h[0],h[1],h[2]);
 					
 					break;
 		}		
 		chrCnt=0;		
+}
+
+void imu_update(void)
+{
+    Quaternion quat;
+    quat = ToQuaternion(angle_z, angle_y, angle_x);
+
+    imu.header.stamp = ros::Time::now();
+
+    imu.angular_velocity.x = gyro_velocity_x;
+    imu.angular_velocity.y = gyro_velocity_y;
+    imu.angular_velocity.z = gyro_velocity_z;
+
+    imu.linear_acceleration.x = linear_accel_x;
+    imu.linear_acceleration.y = linear_accel_y;
+    imu.linear_acceleration.z = linear_accel_z;
+
+    imu.orientation.x = quat.x;
+    imu.orientation.y = quat.y;
+    imu.orientation.z = quat.z;
+    imu.orientation.w = quat.w;
+}
+
+Quaternion ToQuaternion(double yaw, double pitch, double roll) // yaw (Z), pitch (Y), roll (X)
+{
+    // Abbreviations for the various angular functions
+    double cy = cos(yaw * 0.5);
+    double sy = sin(yaw * 0.5);
+    double cp = cos(pitch * 0.5);
+    double sp = sin(pitch * 0.5);
+    double cr = cos(roll * 0.5);
+    double sr = sin(roll * 0.5);
+
+    Quaternion q;
+    q.w = cr * cp * cy + sr * sp * sy;
+    q.x = sr * cp * cy - cr * sp * sy;
+    q.y = cr * sp * cy + sr * cp * sy;
+    q.z = cr * cp * sy - sr * sp * cy;
+
+    return q;
 }
 
 int main(int argc, char **argv)
@@ -204,8 +258,9 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "imu_wt61c_publisher");
     ros::NodeHandle nh;
     ros::Publisher imu_pub = nh.advertise<sensor_msgs::Imu>("imu", 1000);
-    ros::Rate loop_rate(1);    
-    
+    ros::Rate loop_rate(100);    
+    imu.header.frame_id = "imu_link";
+
     fd = uart_open(fd,"/dev/ttyUSB0");/*串口号/dev/ttySn,USB口号/dev/ttyUSBn */ 
     if(fd == -1)
     {
@@ -229,6 +284,11 @@ int main(int argc, char **argv)
         }
 		for (int i=0;i<ret;i++) {ParseData(r_buf[i]);}
         ROS_INFO("data!!\n");
+        ROS_INFO("%f\t%f\t%f\n", angle_x, angle_y, angle_z);
+
+        imu_update();
+
+        imu_pub.publish(imu);
         loop_rate.sleep();
     }
 
