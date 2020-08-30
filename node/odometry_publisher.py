@@ -17,9 +17,9 @@ x = 0.0
 y = 0.0
 th = 0.0
 
-vx = 0.1
-vy = -0.1
-vth = 0.1
+vx = 0
+vy = 0
+vth = 0
 
 current_time = 0
 last_time = 0
@@ -27,7 +27,6 @@ imu_data = Imu()
 
 
 def callback(data):
-    rospy.loginfo(rospy.get_caller_id())
 
     global current_time
     global last_time
@@ -42,27 +41,37 @@ def callback(data):
     global vth
 
     current_time = rospy.Time.now()
+    dt = (current_time - last_time).to_sec()
+    # rospy.loginfo("dt : {}".format(dt)) # 0.01sec
+
     imu_data = data
 
-    vx = imu_data.linear_acceleration.x / 100
-    vy = imu_data.linear_acceleration.y / 100
-    vth = imu_data.angular_velocity.z
+    # rospy.loginfo("x: {}\ty: {}".format(imu_data.linear_acceleration.x,imu_data.linear_acceleration.y))
+    vx += imu_data.linear_acceleration.x * dt
+    vy += imu_data.linear_acceleration.y * dt
+    vth = imu_data.angular_velocity.z / (180 / 3.1415)
 
-    # compute odometry in a typical way given the velocities of the robot
-    dt = (current_time - last_time).to_sec()
-    delta_x = (vx * cos(th) - vy * sin(th)) * dt
-    delta_y = (vx * sin(th) + vy * cos(th)) * dt
-    delta_th = vth * dt
+    # rospy.loginfo("vx : {}\tvy : {}".format(vx, vy))
 
-    x += delta_x
-    y += delta_y
-    th += delta_th
+    # # compute odometry in a typical way given the velocities of the robot
+    # delta_x = (vx * cos(th) - vy * sin(th)) * dt
+    # delta_y = (vx * sin(th) + vy * cos(th)) * dt
+    # delta_th = vth * dt
+
+    x += vx * dt
+    y += vy * dt
+    # rospy.loginfo("x : {}\ty : {}".format(x, y))
+
 
     # since all odometry is 6DOF we'll need a quaternion created from yaw
-    _, __, th = euler_from_quaternion(imu_data.orientation.x,
-                                        imu_data.orientation.y,
-                                        imu_data.orientation.z,
-                                        imu_data.orientation.w)
+    # _, __, th_dec = euler_from_quaternion(imu_data.orientation.x,
+    #                                     imu_data.orientation.y,
+    #                                     imu_data.orientation.z,
+    #                                     imu_data.orientation.w)
+    th_dec = imu_data.orientation.w
+    th = th_dec * 3.141592 / 180
+    rospy.loginfo("th : {}\tth_dec : {}".format(th, imu_data.orientation.w))
+
     odom_quat = tf.transformations.quaternion_from_euler(0, 0, th)
     # odom_quat = (imu_data.orientation.x,
     #             imu_data.orientation.y, 
