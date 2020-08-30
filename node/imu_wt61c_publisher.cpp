@@ -173,7 +173,10 @@ void ParseData(char chr)
 				case 0x51:
 					for (i=0;i<3;i++) a[i] = (float)sData[i]/32768.0*16.0;
 					time(&now);
-					printf("\r\nT:%s a:%6.3f %6.3f %6.3f ",asctime(localtime(&now)),a[0],a[1],a[2]);
+					//printf("\r\nT:%s a:%6.3f %6.3f %6.3f ",asctime(localtime(&now)),a[0],a[1],a[2]);
+                    linear_accel_x = a[0];
+                    linear_accel_y = a[1];
+                    linear_accel_z = a[2];
 					
 					break;
 				case 0x52:
@@ -201,7 +204,7 @@ int main(int argc, char **argv)
     ros::init(argc, argv, "imu_wt61c_publisher");
     ros::NodeHandle nh;
     ros::Publisher imu_pub = nh.advertise<sensor_msgs::Imu>("imu", 1000);
-    ros::Rate loop_rate(100);    
+    ros::Rate loop_rate(1);    
     
     fd = uart_open(fd,"/dev/ttyUSB0");/*串口号/dev/ttySn,USB口号/dev/ttyUSBn */ 
     if(fd == -1)
@@ -216,9 +219,7 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-	FILE *fp;
-	fp = fopen("Record.txt","w");
-    while(1)
+	while(1)
     {
         ret = recv_data(fd,r_buf,44);
         if(ret == -1)
@@ -226,8 +227,9 @@ int main(int argc, char **argv)
             fprintf(stderr,"uart read failed!\n");
             exit(EXIT_FAILURE);
         }
-		for (int i=0;i<ret;i++) {fprintf(fp,"%2X ",r_buf[i]);ParseData(r_buf[i]);}
-        usleep(1000);
+		for (int i=0;i<ret;i++) {ParseData(r_buf[i]);}
+        ROS_INFO("data!!\n");
+        loop_rate.sleep();
     }
 
     ret = uart_close(fd);

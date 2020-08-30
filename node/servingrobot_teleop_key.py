@@ -8,11 +8,18 @@ else:
   import tty, termios
 
 
-ROBOT_MAX_LIN_VEL = 0.26
+# ROBOT_MAX_LIN_VEL = 9999
+# ROBOT_MAX_ANG_VEL = 1000
+ROBOT_MAX_LIN_VEL = 0.5
 ROBOT_MAX_ANG_VEL = 1.0
 
+
+# LIN_VEL_STEP_SIZE = 1
+# ANG_VEL_STEP_SIZE = 1
+
 LIN_VEL_STEP_SIZE = 0.005
-ANG_VEL_STEP_SIZE = 0.1
+ANG_VEL_STEP_SIZE = 0.01
+
 
 msg = """
 Control Your ServingRobot!

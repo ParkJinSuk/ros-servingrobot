@@ -47,10 +47,12 @@ double angular_velocity_R = 0;
 double frequency=0;
 double t=0;
 
-double input_v_L = 30;
+int    input_dir_L = 0;
+double input_v_L = 0;
 double error_L; 
 
-double input_v_R = 30;
+int    input_dir_R = 0;
+double input_v_R = 0;
 double error_R; 
 
 double Ke_DC = 0.0382;
@@ -120,11 +122,17 @@ void setup()
   digitalWrite(9, LOW); //LOW : ST, HIGH : SP
   digitalWrite(8, LOW); //LOW : ST, HIGH : SP
     
-  digitalWrite(22, LOW); //22 HIGH, 23 LOW : 시계방향
-  digitalWrite(23, HIGH); //22 LOW, 23 HIGH : 반시계방향
+  digitalWrite(22, HIGH); //22 HIGH, 23 LOW : 시계방향
+  digitalWrite(23, LOW); //22 LOW, 23 HIGH : 반시계방향
 
-  digitalWrite(24, HIGH); //24 HIGH, 25 LOW : 시계방향
-  digitalWrite(25, LOW); //24 LOW, 25 HIGH : 반시계방향
+  digitalWrite(24, LOW); //24 HIGH, 25 LOW : 시계방향
+  digitalWrite(25, HIGH); //24 LOW, 25 HIGH : 반시계방향
+  
+//  digitalWrite(22, LOW); //22 HIGH, 23 LOW : 시계방향
+//  digitalWrite(23, HIGH); //22 LOW, 23 HIGH : 반시계방향
+//
+//  digitalWrite(24, HIGH); //24 HIGH, 25 LOW : 시계방향
+//  digitalWrite(25, LOW); //24 LOW, 25 HIGH : 반시계방향
 
 //BLDC MOTOR 초기 설정
   pinMode(A, OUTPUT);
@@ -141,70 +149,19 @@ void setup()
   digitalWrite(D, HIGH);
   digitalWrite(E, BLDC_direction); //BLDC 방향 제어
   
-  nh.initNode()
-  nh.subscribe(sub)
+  nh.initNode();
+  nh.subscribe(sub);
 }
 
 void loop()
 {
-  nh.spinOne();
-  delay(1);
+  nh.spinOnce();
+  //delay(1);
 }
 
 ISR (TIMER3_COMPA_vect)  // Compare 인터럽트
 {
   cnt++;
-
-  //DC모터 시나리오
-  if(angle_L > 360 && cnt_DC_end == 0)
-  {
-     input_v_L = 0;
-     input_v_R = 0;
-     digitalWrite(9, HIGH); //LOW : ST, HIGH : SP
-     digitalWrite(8, HIGH); //LOW : ST, HIGH : SP
-     cnt_DC_end = cnt;
-     input_v_BLDC = 10;
-  } //2바퀴 이후 정지
-  
-  if(angle_BLDC < -49 && BLDC_direction == HIGH)
-  {    
-    if(cnt_tmp == 0){
-      cnt_tmp = cnt;
-      input_v_BLDC = 0;
-    }
-
-    if( (cnt-cnt_tmp) > 20){
-      
-      digitalWrite(22, HIGH); //22 HIGH, 23 LOW : 시계방향
-      digitalWrite(23, LOW); //22 LOW, 23 HIGH : 반시계방향
-    
-      digitalWrite(24, LOW); //24 HIGH, 25 LOW : 시계방향
-      digitalWrite(25, HIGH); //24 LOW, 25 HIGH : 반시계방향
-  
-      digitalWrite(9, LOW); //LOW : ST, HIGH : SP
-      digitalWrite(8, LOW); //LOW : ST, HIGH : SP
-      
-      input_v_L = 30;
-      input_v_R = 30;
-      
-      cnt_tmp = 0;
-    }      
-  }
-  
-  Serial.println(angle_BLDC);
-  
-  if(angle_L < -10){
-     input_v_L = 0;
-     input_v_R = 0;
-     digitalWrite(9, HIGH); //LOW : ST, HIGH : SP
-     digitalWrite(8, HIGH); //LOW : ST, HIGH : SP
-     BLDC_direction = LOW;
-     digitalWrite(E, BLDC_direction); //BLDC 방향 제어
-     input_v_BLDC = 10;
-  }
-
-  if (angle_BLDC > 0 && BLDC_direction == LOW)
-    input_v_BLDC = 0;
 
   //DC모터 Left 제어
  angular_velocity_L = (angle_L-temp_angle_L)/t;  //각속도 = 각속도변화/제어주기
@@ -339,6 +296,34 @@ void encoder_interrupt()
     angle_BLDC -= 0.12;
 }
 
+void wheel_L_dir(int dir)
+{
+  if(dir==0)
+  {
+    digitalWrite(22, LOW); //22 HIGH, 23 LOW : 시계방향
+    digitalWrite(23, HIGH); //22 LOW, 23 HIGH : 반시계방향
+  }
+  else if(dir==1)
+  {
+    digitalWrite(22, HIGH); //22 HIGH, 23 LOW : 시계방향
+    digitalWrite(23, LOW); //22 LOW, 23 HIGH : 반시계방향
+  }
+}
+
+void wheel_R_dir(int dir)
+{
+  if(dir==0)
+  {
+    digitalWrite(24, HIGH); //24 HIGH, 25 LOW : 시계방향
+    digitalWrite(25, LOW); //24 LOW, 25 HIGH : 반시계방향
+  }
+  else if(dir==1)
+  {
+    digitalWrite(24, LOW); //24 HIGH, 25 LOW : 시계방향
+    digitalWrite(25, HIGH); //24 LOW, 25 HIGH : 반시계방향
+  }
+}
+
 void onTwist(const geometry_msgs::Twist &msg)
 {
   double left_linear_speed = 0;
@@ -347,7 +332,25 @@ void onTwist(const geometry_msgs::Twist &msg)
   left_linear_speed = msg.linear.x - msg.angular.z * ROBOT_WIDTH/2;
   right_linear_speed = msg.linear.x + msg.angular.z * ROBOT_WIDTH/2;
 
+  if(left_linear_speed < 0)
+  {
+    wheel_L_dir(1);//back
+  }
+  else
+  {
+    wheel_L_dir(0);//front
+  }
+  if(right_linear_speed < 0)
+  {
+    wheel_R_dir(1);//back
+  }
+  else
+  {
+    wheel_R_dir(0);//front
+  }
+
   // 최종 바퀴 각속도 설정
-  input_v_L = left_linear_speed / (ROBOT_WHEEL_DIAMETER * 3.1415);
-  input_v_R = right_linear_speed / (ROBOT_WHEEL_DIAMETER * 3.1415);
+  input_v_L = abs(left_linear_speed / (ROBOT_WHEEL_DIAMETER * 3.1415 / 360));
+  input_v_R = abs(right_linear_speed / (ROBOT_WHEEL_DIAMETER * 3.1415 / 360));
+
 }
