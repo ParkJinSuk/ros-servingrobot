@@ -369,8 +369,14 @@ void onTwist(const geometry_msgs::Twist &msg)
 // update twist for odom
 void updateTwist()
 {
-  twist.angular.x = input_v_L; // degree/sec left wheel
-  twist.angular.y = input_v_R; // degree/sec right wheel
+  float angular_x = input_v_L;
+  float angular_y = input_v_R;
+  
+  if(input_dir_L == 1){angular_x *= -1;}
+  if(input_dir_R == 1){angular_y *= -1;}
+  
+  twist.angular.x = angular_x; // degree/sec left wheel
+  twist.angular.y = angular_y; // degree/sec right wheel
 }
 
 // bldc 4bar control function
