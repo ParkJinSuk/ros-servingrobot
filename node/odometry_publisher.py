@@ -21,8 +21,7 @@ vx = 0
 vy = 0
 vth = 0
 
-ax_calibration  = 0.001
-ay_calibration  = -0.015
+ROBOT_WHEEL_DIAMETER = 0.095
 
 current_time = 0
 last_time = 0
@@ -52,23 +51,20 @@ def callback(data):
     dt = (current_time - last_time).to_sec()
     # rospy.loginfo("dt : {}".format(dt)) # 0.01sec
 
+    vth = imu_data.angular_velocity.z
     th_rad = th * 3.141592 / 180
     # rospy.loginfo("th_rad : {}\t".format(th_rad))
 
     # rospy.loginfo("x: {}\ty: {}".format(imu_data.linear_acceleration.x,imu_data.linear_acceleration.y))
-    vx += (imu_data.linear_acceleration.x - ax_calibration) * dt
-    vy += (imu_data.linear_acceleration.y - ay_calibration) * dt
-    vth = imu_data.angular_velocity.z
-    rospy.loginfo("vx : {}\tvy : {}\tvth : {}".format(vx, vy, vth))
+    # rospy.loginfo("vx : {}\tvy : {}\tvth : {}".format(vx, vy, vth))
 
-    # # compute odometry in a typical way given the velocities of the robot
-    # delta_x = (vx * cos(th) - vy * sin(th)) * dt
-    # delta_y = (vx * sin(th) + vy * cos(th)) * dt
-    # delta_th = vth * dt
-
-    x += vx * dt
-    y += vy * dt
-    # rospy.loginfo("x : {}\ty : {}".format(x, y))
+    # compute odometry in a typical way given the velocities of the robot
+    delta_x = (vx * cos(th_rad) - vy * sin(th_rad)) * dt
+    delta_y = (vx * sin(th_rad) + vy * cos(th_rad)) * dt
+    
+    x += delta_x
+    y += delta_y
+    rospy.loginfo("x : {}\ty : {}".format(x, y))
 
 
     # since all odometry is 6DOF we'll need a quaternion created from yaw
@@ -108,10 +104,19 @@ def callback(data):
 
 def callback_angle(data):
     global th
+    th = data.angular.z
 
-    imu_angle = data
+def callback_enc(data):
+    global vx
+    global vy
 
-    th = imu_angle.angular.z
+    encoder_data = data # dec/sec
+
+    linear_velocity_x = encoder_data.angular.x * (ROBOT_WHEEL_DIAMETER * 3.1415 / 360)
+    linear_velocity_y = encoder_data.angular.y * (ROBOT_WHEEL_DIAMETER * 3.1415 / 360)
+
+    vx = linear_velocity_x
+    vy = linear_velocity_y
 
 def euler_from_quaternion(x, y, z, w):
     t0 = +2.0 * (w * x + y * z)
@@ -141,4 +146,5 @@ if __name__ == "__main__":
     
     rospy.Subscriber('imu', Imu, callback, queue_size=50)
     rospy.Subscriber('imu_angle', Twist, callback_angle, queue_size=50)
+    rospy.Subscriber('encoder_vel', Twist, callback_enc, queue_size=50)
     rospy.spin()
