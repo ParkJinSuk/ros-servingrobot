@@ -47,11 +47,11 @@ double angular_velocity_R = 0;
 double frequency=0;
 double t=0;
 
-int    input_dir_L = 0;
+int    input_dir_L = 0; // 0:front, 1:back
 double input_v_L = 0;
 double error_L; 
 
-int    input_dir_R = 0;
+int    input_dir_R = 0; // 0:front, 1:back
 double input_v_R = 0;
 double error_R; 
 
@@ -75,7 +75,9 @@ char BLDC_direction = HIGH; //BLDC 방향 제어, LOW 시계 방향, HIGH 반시
 void onTwist(const geometry_msgs::Twist &msg);
 double ROBOT_WIDTH = 0.6;  // 서빙로봇의 폭(m)
 double ROBOT_WHEEL_DIAMETER = 0.095; // 서빙로봇 바퀴 직경(m)
+geometry_msgs::Twist twist;
 ros::NodeHandle nh;
+ros::Publisher pub("encoder_vel", &twist);
 ros::Subscriber<geometry_msgs::Twist> sub("cmd_vel", &onTwist);
 
 
@@ -150,14 +152,17 @@ void setup()
   digitalWrite(E, BLDC_direction); //BLDC 방향 제어
   
   nh.initNode();
+  nh.advertise(pub);
   nh.subscribe(sub);
 }
 
 void loop()
 {
+  updateTwist();
+  pub.publish(&twist);
   nh.spinOnce();
-  BLDC_step(1);
-  //delay(1);
+  //BLDC_step(1);
+  delay(1);
 }
 
 ISR (TIMER3_COMPA_vect)  // Compare 인터럽트
@@ -325,6 +330,7 @@ void wheel_R_dir(int dir)
   }
 }
 
+// dc control function with Twist
 void onTwist(const geometry_msgs::Twist &msg)
 {
   double left_linear_speed = 0;
@@ -335,18 +341,22 @@ void onTwist(const geometry_msgs::Twist &msg)
 
   if(left_linear_speed < 0)
   {
+    input_dir_L = 1;
     wheel_L_dir(1);//back
   }
   else
   {
+    input_dir_L = 0;
     wheel_L_dir(0);//front
   }
   if(right_linear_speed < 0)
   {
+    input_dir_R = 1;
     wheel_R_dir(1);//back
   }
   else
   {
+    input_dir_R = 0;
     wheel_R_dir(0);//front
   }
 
@@ -356,6 +366,14 @@ void onTwist(const geometry_msgs::Twist &msg)
 
 }
 
+// update twist for odom
+void updateTwist()
+{
+  twist.angular.x = input_v_L; // degree/sec left wheel
+  twist.angular.y = input_v_R; // degree/sec right wheel
+}
+
+// bldc 4bar control function
 void BLDC_step(int cmd)
 {
  

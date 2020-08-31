@@ -290,8 +290,7 @@ int main(int argc, char **argv)
             exit(EXIT_FAILURE);
         }
 		for (int i=0;i<ret;i++) {ParseData(r_buf[i]);}
-        ROS_INFO("data!!\n");
-        ROS_INFO("%f\t%f\t%f\n", angle_x, angle_y, angle_z);
+        ROS_INFO("accel xy : %f\t%f\n", linear_accel_x, linear_accel_y);
 
         imu_update();
 

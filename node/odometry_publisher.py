@@ -21,10 +21,13 @@ vx = 0
 vy = 0
 vth = 0
 
+ax_calibration  = 0.001
+ay_calibration  = -0.015
+
 current_time = 0
 last_time = 0
 imu_data = Imu()
-
+imu_angle = Twist()
 
 def callback(data):
 
@@ -40,18 +43,23 @@ def callback(data):
     global vy
     global vth
 
+    global ax_calibration
+    global ay_calibration
+
+    imu_data = data
+
     current_time = rospy.Time.now()
     dt = (current_time - last_time).to_sec()
     # rospy.loginfo("dt : {}".format(dt)) # 0.01sec
 
-    imu_data = data
+    th_rad = th * 3.141592 / 180
+    # rospy.loginfo("th_rad : {}\t".format(th_rad))
 
     # rospy.loginfo("x: {}\ty: {}".format(imu_data.linear_acceleration.x,imu_data.linear_acceleration.y))
-    vx += imu_data.linear_acceleration.x * dt
-    vy += imu_data.linear_acceleration.y * dt
-    vth = imu_data.angular_velocity.z / (180 / 3.1415)
-
-    # rospy.loginfo("vx : {}\tvy : {}".format(vx, vy))
+    vx += (imu_data.linear_acceleration.x - ax_calibration) * dt
+    vy += (imu_data.linear_acceleration.y - ay_calibration) * dt
+    vth = imu_data.angular_velocity.z
+    rospy.loginfo("vx : {}\tvy : {}\tvth : {}".format(vx, vy, vth))
 
     # # compute odometry in a typical way given the velocities of the robot
     # delta_x = (vx * cos(th) - vy * sin(th)) * dt
@@ -68,16 +76,10 @@ def callback(data):
     #                                     imu_data.orientation.y,
     #                                     imu_data.orientation.z,
     #                                     imu_data.orientation.w)
-    th_dec = imu_data.orientation.w
-    th = th_dec * 3.141592 / 180
-    rospy.loginfo("th : {}\tth_dec : {}".format(th, imu_data.orientation.w))
 
-    odom_quat = tf.transformations.quaternion_from_euler(0, 0, th)
-    # odom_quat = (imu_data.orientation.x,
-    #             imu_data.orientation.y, 
-    #             imu_data.orientation.z, 
-    #             imu_data.orientation.w)
-
+    # insert euler(radian)
+    odom_quat = tf.transformations.quaternion_from_euler(0, 0, th_rad)
+    
     # first, we'll publish the transform over tf
     odom_broadcaster.sendTransform(
         (x, y, 0.),
@@ -103,6 +105,13 @@ def callback(data):
     odom_pub.publish(odom)
 
     last_time = current_time
+
+def callback_angle(data):
+    global th
+
+    imu_angle = data
+
+    th = imu_angle.angular.z
 
 def euler_from_quaternion(x, y, z, w):
     t0 = +2.0 * (w * x + y * z)
@@ -131,4 +140,5 @@ if __name__ == "__main__":
     last_time = rospy.Time.now()
     
     rospy.Subscriber('imu', Imu, callback, queue_size=50)
+    rospy.Subscriber('imu_angle', Twist, callback_angle, queue_size=50)
     rospy.spin()
