@@ -80,6 +80,10 @@ ros::NodeHandle nh;
 ros::Publisher pub("encoder_vel", &twist);
 ros::Subscriber<geometry_msgs::Twist> sub("cmd_vel", &onTwist);
 
+// 모터 역회전 방지
+int cnt_L_reverse = 0;
+int cnt_R_reverse = 0;
+int cnt_dir = 0;
 
 void setup()
 {
@@ -292,7 +296,6 @@ void doEncoderD(){
   angle_R += (digitalRead(encoderPinC)==digitalRead(encoderPinD))?-0.0577:0.0577; // 360/52/120 = 0.0577 (52 : 1회전시 52펄스, 120 : 감속비)
 
 }
-
 
 void encoder_interrupt()
 {
