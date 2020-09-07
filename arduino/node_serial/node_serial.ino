@@ -92,7 +92,7 @@ double input_v_L_temp = 0;
 double input_v_R_temp = 0;
 double input_v_L_previuos = 0;
 double input_v_R_previuos = 0;
-double check_reverse();
+void check_reverse();
 
 void setup()
 {
