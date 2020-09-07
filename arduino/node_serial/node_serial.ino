@@ -10,6 +10,10 @@
 
 #define SPEED_OUT 20
 
+#define FRONT 0
+#define BACK  1
+#define REVERSE_OKAY 20
+
 int cnt=0;
 int cnt_tmp = 0;
 int cnt_DC_end = 0;
@@ -83,7 +87,12 @@ ros::Subscriber<geometry_msgs::Twist> sub("cmd_vel", &onTwist);
 // 모터 역회전 방지
 int cnt_L_reverse = 0;
 int cnt_R_reverse = 0;
-int cnt_dir = 0;
+int cnt_dir = 0;  // 0:정회전 1:역회전
+double input_v_L_temp = 0;
+double input_v_R_temp = 0;
+double input_v_L_previuos = 0;
+double input_v_R_previuos = 0;
+double check_reverse();
 
 void setup()
 {
@@ -338,35 +347,20 @@ void onTwist(const geometry_msgs::Twist &msg)
 {
   double left_linear_speed = 0;
   double right_linear_speed = 0;
-
+  
   left_linear_speed = msg.linear.x - msg.angular.z * ROBOT_WIDTH/2;
   right_linear_speed = msg.linear.x + msg.angular.z * ROBOT_WIDTH/2;
 
-  if(left_linear_speed < 0)
-  {
-    input_dir_L = 1;
-    wheel_L_dir(1);//back
-  }
-  else
-  {
-    input_dir_L = 0;
-    wheel_L_dir(0);//front
-  }
-  if(right_linear_speed < 0)
-  {
-    input_dir_R = 1;
-    wheel_R_dir(1);//back
-  }
-  else
-  {
-    input_dir_R = 0;
-    wheel_R_dir(0);//front
-  }
+  // 바퀴 각속도 설정
+  input_v_L_temp = abs(left_linear_speed / (ROBOT_WHEEL_DIAMETER * 3.1415 / 360));
+  input_v_R_temp = abs(right_linear_speed / (ROBOT_WHEEL_DIAMETER * 3.1415 / 360));
 
-  // 최종 바퀴 각속도 설정
-  input_v_L = abs(left_linear_speed / (ROBOT_WHEEL_DIAMETER * 3.1415 / 360));
-  input_v_R = abs(right_linear_speed / (ROBOT_WHEEL_DIAMETER * 3.1415 / 360));
+  // 역회전 체크, 최종 각속도 입력
+  check_reverse();
 
+  // // 최종 바퀴 각속도 입력
+  // input_v_L = input_v_L_temp;
+  // input_v_R = input_v_R_temp;
 }
 
 // update twist for odom
@@ -418,4 +412,119 @@ void BLDC_step(int cmd)
     
   }
      
+}
+
+void check_reverse()
+{
+  // 왼쪽 바퀴
+  // 모터 각속도 입력이 정방향일 경우
+  if(input_v_L_temp > 0)
+  {
+    // 방향 상태와 입력이 같은 경우
+    if(input_dir_L == FRONT)
+    {
+      input_v_L = input_v_L_temp; // 최종 바퀴 각속도 입력
+      input_v_L_previuos = input_v_L; // 현재 바퀴 각속도 저장
+      cnt_L_reverse = 0; // 역회전 감지 카운터 초기화
+    }
+    // 방향 상태와 입력이 다를 경우, 역회전
+    else(input_dir_L == BACK)
+    {
+      // 역회전 감지가 일정횟수 계속되면 올바른 신호로 파악
+      if(++cnt_L_reverse > REVERSE_OKAY)
+      {
+        wheel_L_dir(BACK);
+        input_v_L = input_v_L_temp;
+        input_v_L_previuos = input_v_L;
+      }
+      // 역회전이 감지되는 경우 이전 바퀴 각속도 입력
+      else
+      {
+        input_v_L = input_v_L_previuos;
+      }
+    }
+  }
+  // 모터 각속도 입력이 역방향일 경우
+  else(input_v_L_temp < 0)
+  {
+    // 방향 상태와 입력이 같은 경우
+    if(input_dir_L == BACK)
+    {
+      input_v_L = input_v_L_temp; // 최종 바퀴 각속도 입력
+      input_v_L_previuos = input_v_L; // 현재 바퀴 각속도 저장
+      cnt_L_reverse = 0; // 역회전 감지 카운터 초기화
+    }
+    // 방향 상태와 입력이 다를 경우, 역회전
+    else(input_dir_L == FRONT)
+    {
+      // 역회전 감지가 일정횟수 계속되면 올바른 신호로 파악
+      if(++cnt_L_reverse > REVERSE_OKAY)
+      {
+        wheel_L_dir(FRONT);
+        input_v_L = input_v_L_temp;
+        input_v_L_previuos = input_v_L;
+      }
+      // 역회전이 감지되는 경우 이전 바퀴 각속도 입력
+      else
+      {
+        input_v_L = input_v_L_previuos;
+      }
+    }
+  }
+
+  // 오른쪽 바퀴
+  // 모터 각속도 입력이 정방향일 경우
+  if(input_v_R_temp > 0)
+  {
+    // 방향 상태와 입력이 같은 경우
+    if(input_dir_R == FRONT)
+    {
+      input_v_R = input_v_R_temp; // 최종 바퀴 각속도 입력
+      input_v_R_previuos = input_v_R; // 현재 바퀴 각속도 저장
+      cnt_R_reverse = 0; // 역회전 감지 카운터 초기화
+    }
+    // 방향 상태와 입력이 다를 경우, 역회전
+    else(input_dir_R == BACK)
+    {
+      // 역회전 감지가 일정횟수 계속되면 올바른 신호로 파악
+      if(++cnt_R_reverse > REVERSE_OKAY)
+      {
+        wheel_R_dir(BACK);
+        input_v_R = input_v_R_temp;
+        input_v_R_previuos = input_v_R;
+      }
+      // 역회전이 감지되는 경우 이전 바퀴 각속도 입R
+      else
+      {
+        input_v_R = input_v_R_previuos;
+      }
+    }
+  }
+  // 모터 각속도 입력이 역방향일 경우
+  else(input_v_R_temp < 0)
+  {
+    // 방향 상태와 입력이 같은 경우
+    if(input_dir_R == BACK)
+    {
+      input_v_R = input_v_R_temp; // 최종 바퀴 각속도 입력
+      input_v_R_previuos = input_v_R; // 현재 바퀴 각속도 저장
+      cnt_R_reverse = 0; // 역회전 감지 카운터 초기화
+    }
+    // 방향 상태와 입력이 다를 경우, 역회전
+    else(input_dir_R == FRONT)
+    {
+      // 역회전 감지가 일정횟수 계속되면 올바른 신호로 파악
+      if(++cnt_R_reverse > REVERSE_OKAY)
+      {
+        wheel_R_dir(FRONT);
+        input_v_R = input_v_R_temp;
+        input_v_R_previuos = input_v_R;
+      }
+      // 역회전이 감지되는 경우 이전 바퀴 각속도 입력
+      else
+      {
+        input_v_R = input_v_R_previuos;
+      }
+    }
+  }
 }
