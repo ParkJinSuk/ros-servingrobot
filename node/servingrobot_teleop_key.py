@@ -107,7 +107,7 @@ if __name__=="__main__":
                 status = status + 1
                 print(vels(target_linear_vel,target_angular_vel))
             elif key == 'x' :
-                target_linear_vel = checkLinearLimitVelocity(target_linear_vel - LIN_VEL_STEP_SIZE * 10)
+                target_linear_vel = checkLinearLimitVelocity(target_linear_vel - LIN_VEL_STEP_SIZE)
                 status = status + 1
                 print(vels(target_linear_vel,target_angular_vel))
             elif key == 'a' :
