@@ -7,8 +7,6 @@ from sensor_msgs.msg import Imu
 from geometry_msgs.msg import Twist
 from tf2_msgs.msg import TFMessage
 
-
-
 if __name__ == "__main__":
     rospy.init_node("test_node_enc_pub")
     pub_twist = rospy.Publisher('encoder_vel', Twist, queue_size=50)
