@@ -1,7 +1,22 @@
 #!/usr/bin/env python
 import rospy
+import pymysql
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Int16
+
+# pymysql
+my_db = pymysql.connect(
+    user='sexymandoo',
+    passwd='sexymandoo',
+    host='101.101.218.239',
+    db='project',
+    charset='utf8'
+)
+cursor = my_db.cursor(pymysql.cursors.DictCursor)
+sql_all = "SELECT * FROM `orderDB`;"
+sql_callArduino = "SELECT _table FROM project.orderDB WHERE call_arduino = '1' AND serving = '0';"
+sql_completecall = "UPDATE orderDB SET serving = '1' WHERE call_arduino = '1' AND serving = '0';"
+# mypysql
 
 stamp = 0
 twist = Twist()
@@ -10,6 +25,7 @@ int16 = Int16()
 TIME_LIFT_DOWN = 6
 TIME_LIFT_UP = 6
 
+# navigation
 def navigation():
     rospy.loginfo("Ready....")
     rospy.sleep(1)
@@ -56,6 +72,7 @@ def navigation():
     rospy.loginfo("STOP")
     rospy.sleep(1) # 1sec
 
+# 4bar
 def control_4bar():
     rospy.loginfo("Ready....")
     rospy.sleep(0.5)
@@ -97,13 +114,35 @@ def control_4bar():
     rospy.loginfo("stop 1sec")
     rospy.sleep(1) # 1sec
 
-
 if __name__ == "__main__":
     rospy.init_node("node_sena_cmd_pub")
     pub_twist = rospy.Publisher('cmd_vel', Twist, queue_size=50)
     pub_4bar = rospy.Publisher('cmd_vel_4bar', Int16, queue_size=50)
 
     # navigation()
+    # control_4bar()
+    
+    try:
+        while True:
+            rospy.sleep(0.1)
+            cursor.execute(sql_callArduino)
+            call_table_list = cursor.fetchall()
+            print("Call num : {}".format(len(call_table_list)))
+            
+            if(len(call_table_list) > 0):
+                print("\tserving start!")
+                table_number = call_table_list[0]
+                print("table_number {}".format(table_number))
 
-    control_4bar()
+                control_4bar()
+                
+                cursor.execute(sql_completecall)
+                print("ehltsi?$$$$$$$$$$$$$$$$$")
+                my_db.commit()
+                print("\tserving end!")
+            
+            # order_table_num = call_table_list[0]['_table']
+
+    except KeyboardInterrupt:
+        exit()
     
