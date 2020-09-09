@@ -43,8 +43,8 @@ int    input_dir_R = 0; // 0:front, 1:back
 double input_v_R = 0;
 double error_R; 
 double Ke_DC = 0.0382;
-double Kp_DC = 0.083206/1.5;
-double Ki_DC = 0.096457/1.5;
+double Kp_DC = 0.083206/2;
+double Ki_DC = 0.096457/2;
 double PControl_L=0;
 double IControl_L=0;
 double PIControl_L=0;
