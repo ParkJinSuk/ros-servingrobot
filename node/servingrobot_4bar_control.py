@@ -89,8 +89,6 @@ if __name__=="__main__":
         string = String()
         print(msg)
         while(1):
-            
-
             key = getKey()
             if key == 'q' :
                 string.data = "q"

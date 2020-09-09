@@ -1,5 +1,7 @@
 #include <ros.h>
 #include <geometry_msgs/Twist.h>
+#include <std_msgs/Int16.h>
+
 #define A  7
 #define B  30
 #define C  31
@@ -54,12 +56,14 @@ int pwm_in_R=0;
 char BLDC_direction = HIGH; //BLDC 방향 제어, LOW 시계 방향, HIGH 반시계 방향
 // ros 설정
 void onTwist(const geometry_msgs::Twist &msg);
+void BLDC_step(const std_msgs::Int16 &msg);
 double ROBOT_WIDTH = 0.6;  // 서빙로봇의 폭(m)
 double ROBOT_WHEEL_DIAMETER = 0.095; // 서빙로봇 바퀴 직경(m)
 geometry_msgs::Twist twist;
 ros::NodeHandle nh;
 ros::Publisher pub("encoder_vel", &twist);
 ros::Subscriber<geometry_msgs::Twist> sub("cmd_vel", &onTwist);
+ros::Subscriber<std_msgs::Int16> sub_4bar("cmd_vel_4bar", &BLDC_step);
 
 // 모터 역회전 방지
 int cnt_L_reverse = 0;
@@ -132,6 +136,7 @@ void setup()
   nh.initNode();
   nh.advertise(pub);
   nh.subscribe(sub);
+  nh.subscribe(sub_4bar);
 }
 void loop()
 {
@@ -253,9 +258,13 @@ void doEncoderD(){
 void encoder_interrupt()
 {
   if(BLDC_direction == LOW) //시계방향
+  {
     angle_BLDC += 0.12;
+  }
   else if (BLDC_direction == HIGH) //반시계방향
+  {
     angle_BLDC -= 0.12;
+  } 
 }
 void wheel_L_dir(int dir)
 {
@@ -295,7 +304,7 @@ void onTwist(const geometry_msgs::Twist &msg)
     input_dir_L = 1;
     wheel_L_dir(1);//back
   }
-  else
+  else if(left_linear_speed > 0)
   {
     input_dir_L = 0;
     wheel_L_dir(0);//front
@@ -305,11 +314,12 @@ void onTwist(const geometry_msgs::Twist &msg)
     input_dir_R = 1;
     wheel_R_dir(1);//back
   }
-  else
+  else if(right_linear_speed > 0)
   {
     input_dir_R = 0;
     wheel_R_dir(0);//front
   }
+  
   // 최종 바퀴 각속도 설정
   input_v_L = abs(left_linear_speed / (ROBOT_WHEEL_DIAMETER * 3.1415 / 360));
   input_v_R = abs(right_linear_speed / (ROBOT_WHEEL_DIAMETER * 3.1415 / 360));
@@ -327,38 +337,56 @@ void updateTwist()
   twist.angular.y = angular_y; // degree/sec right wheel
 }
 // bldc 4bar control function
-void BLDC_step(int cmd)
+void BLDC_step(const std_msgs::Int16 &msg)
 {
- 
+  twist.angular.z = angle_BLDC;
+  pub.publish(&twist);
+  
   // 4bar left down
-  if(cmd == 0)
+  if(msg.data == 1)  
   {
-    if(angle_BLDC > -49)
-    {
-      BLDC_direction == HIGH;
-      digitalWrite(E, BLDC_direction);
-      input_v_BLDC = 10;
-    }
-    else
-    {
-      input_v_BLDC = 0;
-    }
+
+    // if(angle_BLDC > -49)
+    // {
+    //   BLDC_direction = HIGH;
+    //   digitalWrite(E, BLDC_direction);
+    //   input_v_BLDC = 5;
+    // }
+    // else
+    // {
+    //   input_v_BLDC = 0;
+    // }
+    BLDC_direction = HIGH;
+    digitalWrite(E, BLDC_direction);
+    input_v_BLDC = 10;
     
   }
   // 4bar left up
-  else if(cmd == 1)
+  else if(msg.data == 2)
   {
-    if(angle_BLDC < 49)
-    {
-      BLDC_direction = LOW;
-      digitalWrite(E, BLDC_direction);
-      input_v_BLDC = 10;
-    }
-    else
-    {
-      input_v_BLDC = 0;
-    }
+    // if(angle_BLDC < 49)
+    // {
+    //   BLDC_direction = LOW;
+    //   digitalWrite(E, BLDC_direction);
+    //   input_v_BLDC = 10;
+    // }
+    // else
+    // {
+    //   input_v_BLDC = 0;
+    // }
+    BLDC_direction = LOW;
+    digitalWrite(E, BLDC_direction);
+    input_v_BLDC = 10;
     
   }
+  else if(msg.data == 0)
+  {
+    // // test pub
+    // twist.angular.x = 6.9; // degree/sec left wheel
+    // twist.angular.y = 7.4; // degree/sec right wheel
+    // pub.publish(&twist);
+    input_v_BLDC = 0;
+  }
+  
      
 }

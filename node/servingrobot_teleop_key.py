@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import rospy
 from geometry_msgs.msg import Twist
+from std_msgs.msg import Int16
 import sys, select, os
 if os.name == 'nt':
   import msvcrt
@@ -28,6 +29,8 @@ Moving around:
         w
    a    s    d
         x
+0 : 4bar lift down
+1 : 4bar lift up
 w/x : increase/decrease linear velocity (~ 0.26)
 a/d : increase/decrease angular velocity (~ 1.82)
 space key, s : force stop
@@ -91,6 +94,9 @@ if __name__=="__main__":
 
     rospy.init_node('servingrobot_teleop')
     pub = rospy.Publisher('cmd_vel', Twist, queue_size=50)
+    pub_4bar = rospy.Publisher('cmd_vel_4bar', Int16, queue_size=50)
+
+    int16 = Int16()
 
     status = 0
     target_linear_vel   = 0.0
@@ -118,6 +124,18 @@ if __name__=="__main__":
                 target_angular_vel = checkAngularLimitVelocity(target_angular_vel - ANG_VEL_STEP_SIZE)
                 status = status + 1
                 print(vels(target_linear_vel,target_angular_vel))
+            elif key == '0' :
+                int16.data = 0
+                pub_4bar.publish(int16)
+                print('0')
+            elif key == '1' :
+                int16.data = 1
+                pub_4bar.publish(int16)
+                print('1')
+            elif key == '2' :
+                int16.data = 2
+                pub_4bar.publish(int16)
+                print('2')
             elif key == ' ' or key == 's' :
                 target_linear_vel   = 0.0
                 control_linear_vel  = 0.0
