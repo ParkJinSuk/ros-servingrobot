@@ -124,7 +124,8 @@ if __name__ == "__main__":
     
     try:
         while True:
-            rospy.sleep(0.1)
+            rospy.sleep(1)
+            my_db.commit()
             cursor.execute(sql_callArduino)
             call_table_list = cursor.fetchall()
             print("Call num : {}".format(len(call_table_list)))
@@ -144,5 +145,5 @@ if __name__ == "__main__":
             # order_table_num = call_table_list[0]['_table']
 
     except KeyboardInterrupt:
-        exit()
+        my_db.close()
     
