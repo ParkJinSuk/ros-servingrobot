@@ -8,37 +8,44 @@ sudo apt update
 sudo apt upgrade
 ```
 ### 저장소 추가
+```
 sudo sh -c 'echo "deb http://packages.ros.org/ros/ubuntu ${lsb_release -sc} main" > /etc/apt/sources.list.d/ros-latest.list'
 sudo apt-key adv --keyserver 'hkp://keyserver.ubuntu.com:80' --recv-key C1CF6E31E6BADE8868B172B4F42ED6FBAB17C654
+```
 ### ROS 설치
+```
 sudo apt update
 sudo apt install ros-melodic-desktop-full
 sudo apt-get install python-pip
 sudo pip install -U rosdep
 sudo rosdep init
 rosdep update
-
+```
 # 환경변수 등록
+```
 echo "source /opt/ros/melodic/setup.bash" >> ~/.bashrc
 source ~/.bashrc
 sudo apt-get install python-rosinstall python-rosinstall-generator python-wstool
-
+```
 # 작업환경 구축
+```
 mkdir -p ~/catkin_ws/src
 cd ~/catkin_ws/src
 catkin_init_workspace
 cd ..
 catkin_make
-
+```
 # 작업공간 환경변수 등록
+```
 echo "source ~/catkin_ws/devel/setup.bash" >> ~/.bashrc
 source ~/.bashrc
 
-
+```
 # 6축자이로센서 포트 설정
 자이로센서 값을 받아오기 위해 포트값을 ttyUSB0로 고정
+``` C
 fd = uart_open(fd, "/dev/ttyUSB0");
-
+```
 
 # 작업공간에 RPLiDAR 센서 라이브러리 복사 및 설치
 cd ~/catkin_ws/src
