@@ -3,7 +3,7 @@
 
 # ROS 설치 및 환경 설정
 ### 최신 라이브러리로 업데이트
-```
+``` BASH
 sudo apt update
 sudo apt upgrade
 ```
